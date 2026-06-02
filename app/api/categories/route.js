@@ -1,15 +1,25 @@
+import { Redis } from "@upstash/redis";
 import { promises as fs } from "fs";
 import path from "path";
 
-const dataFile = path.join(process.cwd(), "data", "categories.json");
+const DATA_FILE = path.join(process.cwd(), "data", "categories.json");
+
+const kv = new Redis({
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN,
+});
 
 async function getCategories() {
-  const data = await fs.readFile(dataFile, "utf8");
-  return JSON.parse(data);
+  const cached = await kv.get("categories");
+  if (cached) return cached;
+  const data = await fs.readFile(DATA_FILE, "utf8");
+  const categories = JSON.parse(data);
+  await kv.set("categories", categories);
+  return categories;
 }
 
 async function saveCategories(categories) {
-  await fs.writeFile(dataFile, JSON.stringify(categories, null, 2), "utf8");
+  await kv.set("categories", categories);
 }
 
 export async function GET() {
@@ -20,16 +30,10 @@ export async function GET() {
 export async function POST(request) {
   const body = await request.json();
   const categories = await getCategories();
-
   const maxId = categories.reduce((max, c) => Math.max(max, c.id), 0);
-  const category = {
-    id: maxId + 1,
-    name: body.name.toLowerCase().replace(/\s+/g, "-"),
-    label: body.label,
-  };
-
+  const name = body.label.toLowerCase().replace(/\s+/g, "-");
+  const category = { id: maxId + 1, name, label: body.label };
   categories.push(category);
   await saveCategories(categories);
-
   return Response.json(category, { status: 201 });
 }
