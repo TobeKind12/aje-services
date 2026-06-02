@@ -1,0 +1,7 @@
+[
+  { "id": 1, "name": "savons", "label": "Savons" },
+  { "id": 2, "name": "pommades", "label": "Pommades" },
+  { "id": 3, "name": "baumes", "label": "Baumes" },
+  { "id": 4, "name": "gommages", "label": "Gommages" },
+  { "id": 5, "name": "huiles", "label": "Huiles" }
+]

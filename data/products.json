@@ -1,0 +1,79 @@
+[
+  {
+    "id": 1,
+    "name": "Savon à la lavande",
+    "description": "Savon artisanal à l'huile essentielle de lavande. Apaise et adoucit la peau.",
+    "price": 5,
+    "category": "savons",
+    "image": "",
+    "stock": true,
+    "featured": false,
+    "createdAt": "2026-05-15T10:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Savon au miel et à l'avoine",
+    "description": "Savon nourrissant au miel local et à l'avoine pour une peau douce et hydratée.",
+    "price": 6,
+    "category": "savons",
+    "image": null,
+    "stock": true,
+    "featured": false,
+    "createdAt": "2026-05-15T10:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "Pommade cicatrisante",
+    "description": "Pommade à base de plantes pour aider à la cicatrisation des petites plaies et irritations.",
+    "price": 8,
+    "category": "pommades",
+    "image": null,
+    "stock": true,
+    "featured": true,
+    "createdAt": "2026-05-20T10:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "name": "Baume à lèvres au beurre de karité",
+    "description": "Baume hydratant au beurre de karité et à l'huile de coco. Protège et nourrit les lèvres.",
+    "price": 3.5,
+    "category": "baumes",
+    "image": null,
+    "stock": true,
+    "featured": false,
+    "createdAt": "2026-05-20T10:00:00.000Z"
+  },
+  {
+    "id": 5,
+    "name": "Gommage corps au sucre et à la vanille",
+    "description": "Gommage corporel exfoliant au sucre brun et à la vanille. Laisse la peau douce et parfumée.",
+    "price": 10,
+    "category": "gommages",
+    "image": null,
+    "stock": true,
+    "featured": true,
+    "createdAt": "2026-05-25T10:00:00.000Z"
+  },
+  {
+    "id": 6,
+    "name": "Huile de massage relaxante",
+    "description": "Huile de massage aux huiles essentielles de lavande et de camomille pour un moment de détente.",
+    "price": 12,
+    "category": "huiles",
+    "image": null,
+    "stock": true,
+    "featured": false,
+    "createdAt": "2026-05-25T10:00:00.000Z"
+  },
+  {
+    "id": 7,
+    "name": "Savon de nila",
+    "description": "Savon disponible pour tout type de peau",
+    "price": 5,
+    "category": "savons",
+    "image": null,
+    "stock": true,
+    "featured": true,
+    "createdAt": "2026-06-01T19:07:28.771Z"
+  }
+]
