@@ -67,6 +67,7 @@ export default function RootLayout({ children }) {
     <html lang="fr">
       <head>
         <title>AJE Services</title>
+<link rel="icon" href="/logo.png" type="image/png" />
         <meta name="description" content="Produits de beauté naturels et artisanaux" />
       </head>
       <body>

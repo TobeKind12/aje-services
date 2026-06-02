@@ -3,10 +3,10 @@
     "id": 1,
     "name": "Savon à la lavande",
     "description": "Savon artisanal à l'huile essentielle de lavande. Apaise et adoucit la peau.",
-    "price": 5,
+    "price": 500,
     "category": "savons",
     "image": "",
-    "stock": true,
+    "stock": false,
     "featured": false,
     "createdAt": "2026-05-15T10:00:00.000Z"
   },
