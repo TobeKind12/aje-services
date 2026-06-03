@@ -64,6 +64,10 @@ export default function EditProductPage() {
       if (uploadRes.ok) {
         const data = await uploadRes.json();
         imageUrl = data.url;
+      } else {
+        const err = await uploadRes.json();
+        setMessage("Erreur upload : " + (err.error || "inconnue"));
+        return;
       }
     }
 
@@ -182,7 +186,8 @@ export default function EditProductPage() {
               accept="image/*"
               onChange={(e) => setFile(e.target.files[0])}
             />
-            {form.image && <small style={{ display: "block", marginTop: 4, color: "var(--brown-light)" }}>Image actuelle : {form.image}</small>}
+            {file && <img src={URL.createObjectURL(file)} alt="Aperçu" className="admin-preview" />}
+            {form.image && !file && <img src={form.image} alt="Image actuelle" className="admin-preview" />}
           </div>
           <div className="form-group">
             <label>

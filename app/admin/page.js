@@ -51,6 +51,10 @@ export default function AdminPage() {
       if (uploadRes.ok) {
         const data = await uploadRes.json();
         imageUrl = data.url;
+      } else {
+        const err = await uploadRes.json();
+        setMessage("Erreur upload : " + (err.error || "inconnue"));
+        return;
       }
     }
 
@@ -163,7 +167,8 @@ export default function AdminPage() {
                 <div className="form-group">
                   <label>Photo du produit</label>
                   <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} />
-                  {form.image && <small style={{ display: "block", marginTop: 4, color: "var(--brown-light)" }}>Image actuelle : {form.image}</small>}
+                  {file && <img src={URL.createObjectURL(file)} alt="Aperçu" className="admin-preview" />}
+                  {form.image && !file && <img src={form.image} alt="Image actuelle" className="admin-preview" />}
                 </div>
                 <div className="form-group">
                   <label>Catégorie</label>
@@ -228,6 +233,7 @@ export default function AdminPage() {
           <table className="admin-table">
             <thead>
               <tr>
+                <th>Image</th>
                 <th>ID</th>
                 <th>Nom</th>
                 <th>Catégorie</th>
@@ -240,6 +246,13 @@ export default function AdminPage() {
             <tbody>
               {products.map((p) => (
                 <tr key={p.id}>
+                  <td>
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="admin-thumb" />
+                    ) : (
+                      <span className="admin-thumb-placeholder">🌸</span>
+                    )}
+                  </td>
                   <td>{p.id}</td>
                   <td>{p.name}</td>
                   <td>{p.category}</td>

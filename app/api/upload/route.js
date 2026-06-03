@@ -14,6 +14,12 @@ export async function POST(request) {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const { put } = await import("@vercel/blob");
+    const blob = await put(filename, buffer, { access: "public" });
+    return Response.json({ url: blob.url });
+  }
+
   const filepath = path.join(process.cwd(), "public", "uploads", filename);
   await writeFile(filepath, buffer);
 
