@@ -1,5 +1,5 @@
 import { Redis } from "@upstash/redis";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 const kv = new Redis({
   url: process.env.KV_REST_API_URL,
@@ -43,22 +43,30 @@ function formatEmailHTML(items, total, customerPhone) {
 }
 
 async function sendEmail(items, total, customerPhone) {
-  const apiKey = process.env.RESEND_API_KEY;
   const adminEmail = process.env.ADMIN_EMAIL;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
 
-  if (!apiKey || !adminEmail) {
-    console.log("Email notification skipped: missing RESEND_API_KEY or ADMIN_EMAIL");
+  if (!adminEmail || !smtpUser || !smtpPass) {
+    console.log("Email notification skipped: missing SMTP_USER, SMTP_PASS, or ADMIN_EMAIL");
     return false;
   }
 
   try {
-    const resend = new Resend(apiKey);
-    await resend.emails.send({
-      from: `${SITE_NAME} <commandes@${process.env.RESEND_DOMAIN || "votredomaine.com"}>`,
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+
+    await transporter.sendMail({
+      from: `${SITE_NAME} <${smtpUser}>`,
       to: adminEmail,
       subject: `Nouvelle commande ${SITE_NAME} — ${total.toFixed(2)} FCFA`,
       html: formatEmailHTML(items, total, customerPhone),
     });
+
     return true;
   } catch (err) {
     console.error("Email error:", err);
