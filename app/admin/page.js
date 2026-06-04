@@ -16,6 +16,7 @@ export default function AdminPage() {
   const [newCatLabel, setNewCatLabel] = useState("");
   const [editingPrice, setEditingPrice] = useState(null);
   const [priceValue, setPriceValue] = useState("");
+  const [orders, setOrders] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,7 +27,13 @@ export default function AdminPage() {
     }
     fetchProducts();
     fetchCategories();
+    fetchOrders();
   }, [router]);
+
+  async function fetchOrders() {
+    const res = await fetch("/api/orders");
+    if (res.ok) setOrders(await res.json());
+  }
 
   async function fetchProducts() {
     const res = await fetch("/api/products");
@@ -136,6 +143,9 @@ export default function AdminPage() {
       <div className="category-filters" style={{ marginBottom: 24 }}>
         <button className={`filter-btn ${tab === "products" ? "active" : ""}`} onClick={() => setTab("products")}>
           Produits
+        </button>
+        <button className={`filter-btn ${tab === "orders" ? "active" : ""}`} onClick={() => setTab("orders")}>
+          Commandes {orders.length > 0 && <span className="cart-badge">{orders.length}</span>}
         </button>
         <button className={`filter-btn ${tab === "categories" ? "active" : ""}`} onClick={() => setTab("categories")}>
           Catégories
@@ -315,6 +325,49 @@ export default function AdminPage() {
             </tbody>
           </table>
         </>
+      )}
+
+      {tab === "orders" && (
+        <div>
+          <h2 style={{ marginBottom: 16 }}>Commandes</h2>
+          {orders.length === 0 ? (
+            <div className="empty-state">
+              <h2>Aucune commande</h2>
+              <p>Les commandes apparaitront ici.</p>
+            </div>
+          ) : (
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Articles</th>
+                  <th>Total</th>
+                  <th>Téléphone</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...orders].reverse().map((order) => (
+                  <tr key={order.id}>
+                    <td style={{ fontSize: "0.8rem", whiteSpace: "nowrap" }}>
+                      {new Date(order.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </td>
+                    <td>
+                      {order.items.map((item, i) => (
+                        <div key={i} style={{ fontSize: "0.85rem" }}>
+                          {item.name} x{item.quantity}
+                        </div>
+                      ))}
+                    </td>
+                    <td style={{ fontWeight: 600 }}>{order.total.toFixed(2)} FCFA</td>
+                    <td>{order.customerPhone || "—"}</td>
+                    <td><span style={{ color: "var(--primary)", fontWeight: 600 }}>{order.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
 
       {tab === "categories" && (

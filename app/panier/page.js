@@ -7,6 +7,8 @@ export default function CartPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [stockIssues, setStockIssues] = useState({});
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     function loadCart() {
@@ -74,14 +76,33 @@ export default function CartPage() {
       return;
     }
     setError("");
-    const phone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "33600000000";
+    setSending(true);
+
+    try {
+      await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart,
+          total,
+          customerPhone: customerPhone || null,
+        }),
+      });
+    } catch (e) {
+      console.error("Order notification error:", e);
+    }
+
+    const phone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "2250749408449";
     let text = "Bonjour ! Je souhaite commander :\n\n";
     cart.forEach((item) => {
       text += `- ${item.name} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)} FCFA\n`;
     });
-    text += `\nTotal : ${total.toFixed(2)} FCFA\n\nMerci !`;
+    text += `\nTotal : ${total.toFixed(2)} FCFA\n\n`;
+    if (customerPhone) text += `📞 ${customerPhone}\n\n`;
+    text += "Merci !";
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
     setMessage("Redirection vers WhatsApp...");
+    setSending(false);
   }
 
   return (
@@ -129,9 +150,18 @@ export default function CartPage() {
 
           <div className="cart-total">
             <span className="cart-total-text">Total : {total.toFixed(2)} FCFA</span>
-            <button className={`btn btn-block ${hasStockIssue ? "btn-disabled" : "btn-whatsapp"}`} onClick={whatsappOrder} disabled={hasStockIssue}>
-              {hasStockIssue ? "Articles indisponibles" : "Commander via WhatsApp"}
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
+              <input
+                type="tel"
+                placeholder="Votre téléphone (optionnel)"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                style={{ padding: "10px 14px", border: "1px solid var(--border)", borderRadius: 6, fontSize: "0.9rem", width: "100%" }}
+              />
+              <button className={`btn btn-block ${hasStockIssue || sending ? "btn-disabled" : "btn-whatsapp"}`} onClick={whatsappOrder} disabled={hasStockIssue || sending}>
+                {sending ? "Envoi en cours..." : hasStockIssue ? "Articles indisponibles" : "Commander via WhatsApp"}
+              </button>
+            </div>
           </div>
         </>
       )}
