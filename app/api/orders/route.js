@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { Resend } from "resend";
 
 const kv = new Redis({
   url: process.env.KV_REST_API_URL,
@@ -7,53 +8,62 @@ const kv = new Redis({
 
 const SITE_NAME = process.env.SITE_NAME || "AJE Services";
 
-function formatOrderMessage(items, total, customerPhone) {
-  let text = `🛒 *Nouvelle commande ${SITE_NAME}*\n\n`;
-  items.forEach((item, i) => {
-    text += `${i + 1}. ${item.name} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)} FCFA\n`;
-  });
-  text += `\n*Total : ${total.toFixed(2)} FCFA*\n`;
-  if (customerPhone) {
-    text += `\n📞 Client : ${customerPhone}`;
-  }
-  text += `\n\n⏱ ${new Date().toLocaleString("fr-FR", { timeZone: "UTC" })}`;
-  return text;
+function formatEmailHTML(items, total, customerPhone) {
+  const rows = items.map(
+    (item) => `
+      <tr>
+        <td style="padding:10px;border-bottom:1px solid #eee">${item.name}</td>
+        <td style="padding:10px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
+        <td style="padding:10px;border-bottom:1px solid #eee;text-align:right">${(item.price * item.quantity).toFixed(2)} FCFA</td>
+      </tr>`
+  ).join("");
+
+  return `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
+      <h2 style="color:#b8944e;">Nouvelle commande ${SITE_NAME}</h2>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0">
+        <thead>
+          <tr style="background:#f5f3f0">
+            <th style="padding:10px;text-align:left">Produit</th>
+            <th style="padding:10px;text-align:center">Qté</th>
+            <th style="padding:10px;text-align:right">Sous-total</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding:10px;font-weight:bold;text-align:right">Total</td>
+            <td style="padding:10px;font-weight:bold;text-align:right;color:#b8944e;font-size:1.1em">${total.toFixed(2)} FCFA</td>
+          </tr>
+        </tfoot>
+      </table>
+      ${customerPhone ? `<p style="color:#666">📞 Téléphone client : <strong>${customerPhone}</strong></p>` : ""}
+      <p style="color:#999;font-size:0.85em">${new Date().toLocaleString("fr-FR", { timeZone: "UTC" })}</p>
+    </div>`;
 }
 
-async function sendWhatsAppNotification(message) {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const adminPhone = process.env.WHATSAPP_ADMIN_PHONE || process.env.NEXT_PUBLIC_WHATSAPP_PHONE;
+async function sendEmail(items, total, customerPhone) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const adminEmail = process.env.ADMIN_EMAIL;
 
-  if (!phoneNumberId || !accessToken || !adminPhone) {
-    console.log("WhatsApp notification skipped: missing env vars");
+  if (!apiKey || !adminEmail) {
+    console.log("Email notification skipped: missing RESEND_API_KEY or ADMIN_EMAIL");
     return false;
   }
 
-  const res = await fetch(
-    `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: adminPhone,
-        type: "text",
-        text: { body: message },
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.text();
-    console.error("WhatsApp API error:", err);
+  try {
+    const resend = new Resend(apiKey);
+    await resend.emails.send({
+      from: `${SITE_NAME} <commandes@${process.env.RESEND_DOMAIN || "votredomaine.com"}>`,
+      to: adminEmail,
+      subject: `Nouvelle commande ${SITE_NAME} — ${total.toFixed(2)} FCFA`,
+      html: formatEmailHTML(items, total, customerPhone),
+    });
+    return true;
+  } catch (err) {
+    console.error("Email error:", err);
     return false;
   }
-
-  return true;
 }
 
 export async function POST(request) {
@@ -64,8 +74,6 @@ export async function POST(request) {
     if (!items || !items.length) {
       return Response.json({ error: "Panier vide" }, { status: 400 });
     }
-
-    const message = formatOrderMessage(items, total, customerPhone);
 
     if (kv) {
       const order = {
@@ -81,7 +89,7 @@ export async function POST(request) {
       await kv.set("orders", orders);
     }
 
-    await sendWhatsAppNotification(message);
+    await sendEmail(items, total, customerPhone);
 
     return Response.json({ success: true });
   } catch (err) {
